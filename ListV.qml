@@ -1,112 +1,88 @@
-import QtQuick
-import QtQuick.Controls
-import FileManager 1.0
+import QtQuick 2.0
+import QtQuick.Controls 2.0
+import QtQuick.Controls 2.4
 
-ListView {
-    id: fsysmod
-    property var fmControl: null
-    property var sourcePathForCopy: null
-    property var sourceFileForCopy: null
-
-    highlight: Rectangle {
-        color: "lightsteelblue";
-    }
-    currentIndex: -1
-    delegate: Rectangle
-    {
-        color: "transparent"
-        height: 30
-        width: parent.width
-        Text {
-            text: fileName
-            font.bold: fileIsDir ? true : false
+ScrollView {
+    clip: true
+    property var index: lv.currentIndex
+    ListView {
+        id: lv
+        property var sourcePathForCopy: ""
+        property var sourceFileForCopy: ""
+        model: folderModel
+        highlight: Rectangle {
+            color: "lightsteelblue";
         }
-        MouseArea {
-            z: 1
-            anchors.fill: parent
+        currentIndex: -1
+        delegate: MouseArea {
+            width: childrenRect.width
+            height: childrenRect.height
             acceptedButtons: Qt.LeftButton | Qt.RightButton
-            //propagateComposedEvents: true
-            //  preventStealing: true
-            onClicked: {
-                                fsysmod.currentIndex = index
-                if (mouse.button === Qt.RightButton) {
-                    contextMenu.popup()
-                }
 
-                if (!fileIsDir) {
-
-                    // console.log("fileName", folderModel.get(index, "fileName"))
-                    // console.log("filePath", folderModel.get(index, "filePath"))
-                    // console.log("fileURL", folderModel.get(index, "fileURL"))
-                    // console.log("fileUrl", folderModel.get(index, "fileUrl"))
-                    // console.log("fileBaseName", folderModel.get(index, "fileBaseName"))
-                    // console.log("fileSuffix", folderModel.get(index, "fileSuffix"))
-                    // console.log("fileSize", folderModel.get(index, "fileSize"))
-                    //  console.log("fileModified", folderModel.get(index, "fileModified"))
-                    //  console.log("fileAccessed", folderModel.get(index, "fileAccessed"))
-                    // console.log("fileIsDir", folderModel.get(index, "fileIsDir"))
-                    console.log("parentFolder", folderModel.parentFolder)
-
-                    console.log("fsysmod.model.folder", fsysmod.model.name)
-
-                   // pathLbl.text = filePath
-                    te.text = fm.setPath(filePath)
-                }
+            Text {
+                width: lv.width
+                text: fileName
+                font.bold: fileIsDir ? true : false
             }
+
+            onClicked: {
+                lv.currentIndex = index
+                if (mouse.button === Qt.RightButton)
+                    contextMenu.popup()
+                else
+                    if (!fileIsDir)
+                        fm.setFile(filePath)
+
+            }
+
             onDoubleClicked: {
-                fsysmod.currentIndex = index
+                lv.currentIndex = index
                 if (fileIsDir) {
-                    folderModel.folder =  "file:/" + filePath + "/"
-                    // folderModel.folder = folderModel.get(folderModel.index, "fileUrl");
-                    //te.text = fm.setPath(filePath)
-                    console.log(folderModel.get(folderModel.index, "filePath"),  "file:/" + filePath + "/")
+
+                    if (folderModel.parentFolder == folderModel.rootFolder)
+                        folderModel.folder = folderModel.folder + fileName
+                    else
+                        folderModel.folder = folderModel.folder + "/" + fileName
                 }
-                //console.log(folderModel.get(folderModel.index, "fileURL"))
-                // folderModel.folder =  "file:/" + filePath + "/"
             }
 
             Menu {
                 id: contextMenu
-                MenuItem { text: "удалить"
-                    onTriggered: fm.remove(filePath)
+
+                MenuItem {
+                    text: "удалить"
+                    onTriggered: fm.removeFile(filePath, fileIsDir)
                 }
-                MenuItem { text: "Копировать"
-                    onTriggered: {sourcePathForCopy = filePath
-                        sourceFileForCopy = fileName
-                     console.log("имя файла", fileName)
+
+                MenuItem {
+                    text: "Копировать"
+                    onTriggered: {
+                        lv.sourcePathForCopy = filePath
+                        lv.sourceFileForCopy = fileName
                     }
                 }
             }
         }
-    }
 
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.RightButton
-        z: -1
-        onClicked: {
-            //if (mouse.button === Qt.RightButton) {
-            cm.popup()
-            // }
-        }
-        Menu {
-            id: cm
-            MenuItem {
-                //  property var newPathForCopy: null
-                text: "Вставить"
-                onTriggered: {
-
-                    if (!fm.copy(sourcePathForCopy, urlToPath(fsysmod.model.folder) +sourceFileForCopy/*folderModel.get(folderModel.index, "filePath")*/))
-                        errorCopy.open()
-
-                }
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.RightButton
+            z: -1
+            onClicked: {
+                if ((lv.sourcePathForCopy != "") && (lv.sourceFileForCopy!= "") )
+                    cm.popup()
             }
         }
 
+        Menu {
+            id: cm
+            MenuItem {
+                text: "Вставить"
+                onTriggered: {
+                    if (!fm.copyFile(lv.sourcePathForCopy,   urlToPath(lv.model.folder) + lv.sourceFileForCopy))
+                        errorCopy.open()
+                }
+            }
+        }
     }
-
-
-    //    FileManager {
-    //        id: fm
-    //    }
 }

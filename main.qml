@@ -1,20 +1,22 @@
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Dialogs
-import QtQuick.Layouts
-import QtQml
-import Qt.labs.folderlistmodel
+import QtQuick 2.0
+import QtQuick.Controls 1.4
+import QtQuick.Controls 2.4
+import QtQuick.Layouts 1.0
+import Qt.labs.folderlistmodel 2.11
+
 import FileManager 1.0
 
 ApplicationWindow {
-    width: 640
-    height: 480
+    id: root
+    width: 940
+    height: 680
     visible: true
     title: qsTr("File Reader")
 
     menuBar: MenuBar {
         Menu {
             title: qsTr("Вид")
+
             MenuItem {
                 text: qsTr("Список")
                 onTriggered: loader.setSource("qrc:/ListV.qml", {"model": folderModel }, {"fmControl": fm})
@@ -34,6 +36,7 @@ ApplicationWindow {
 
         Menu {
             title: qsTr("Сортировка")
+
             MenuItem {
                 text: qsTr("Название")
                 onTriggered: folderModel.sortField = FolderListModel.Name
@@ -55,139 +58,157 @@ ApplicationWindow {
             }
         }
     }
-    header: Label {
-        id: pathLbl
-        // text: folderModel.folder
-
+    header: Row {
+        Label {
+            id: pathLbl
+            leftPadding: 10
+        }
     }
-    Rectangle {
-        id: background
-        anchors.fill: parent
-        color: "gray"
-        // opacity: 0.7
-        z: -1
-        RowLayout {
-            anchors.fill: parent
-            spacing: 6
-            Rectangle {
-                //левая часть
-                id: modelSpace
-                Layout.fillHeight: true
-                Layout.preferredWidth: parent.width * 0.3
-                color: "white"
-                ColumnLayout {
-                    anchors.fill: parent
-                    RowLayout {
-                        //Layout.fillWidth: true
-                        // anchors.fill: parnt
-                        Button {
-                            Layout.preferredWidth: 50
-                            text: "back"
-                            onClicked: {
-                                folderModel.folder = folderModel.parentFolder// + "/"
-                                // te.text = fm.setPath(filePath)
 
+    SplitView {
+        anchors.fill: parent
+        orientation: Qt.Horizontal
+        z: -1
+
+        Rectangle {
+            //область файловой системы
+            height: parent.height
+            width: parent.width * 0.3
+            color: "white"
+            ColumnLayout {
+                anchors.fill: parent
+                RowLayout {
+                    spacing: 0
+                    Button {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 20
+                        text: "<"
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.color: "black"
+                        }
+                        onClicked: {
+                            if (folderModel.parentFolder != folderModel.rootFolder)
+                                folderModel.folder = folderModel.parentFolder
+                        }
+                    }
+                    Button {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 20
+                        text: ">"
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.color: "black"
+                        }
+                        onClicked:  {
+                            var ind  = loader.item.index
+                            if (folderModel.isFolder(ind)) {
+                                if (folderModel.parentFolder == folderModel.rootFolder)
+                                    folderModel.folder =  folderModel.folder + folderModel.get(ind, "fileName")
+                                else
+                                    folderModel.folder =  folderModel.folder + "/" + folderModel.get(ind, "fileName")
                             }
                         }
-                        Button {
-                            Layout.preferredWidth: 50
-                            text: "next"
-                        }
                     }
-                    ScrollView {
-                        Layout.fillHeight: true
-                        Layout.fillWidth: true
+                }
 
-                        Loader {
-                            id: loader
-                            anchors.fill: parent
-                            // Layout.preferredHeight: 1000
-                            //Layout.preferredWidth: 500
-                            source: "qrc:/GridV.qml"
+                Loader {
+                    id: loader
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 10
+                    Layout.topMargin: 10
+                    source: "qrc:/ListV.qml"
 
+                }
 
-                        }
-                        FolderListModel {
-                            id: folderModel
-                            showDirsFirst: true
-                            //  rootFolder:"file:/c"
-                            //folder:  "file:/git"
-                            // nameFilters: ["*.qml"]
-
-
-                            Component.onCompleted: pathLbl.text = urlToPath(folderModel.folder)
-
-
-                            onFolderChanged: pathLbl.text = urlToPath(folderModel.folder)
-
-                        }
-
-                    }
-
+                FolderListModel {
+                    id: folderModel
+                    showDirsFirst: true
+                    rootFolder: "file:///"
+                    Component.onCompleted: pathLbl.text = urlToPath(folderModel.folder)
+                    onFolderChanged:  pathLbl.text = urlToPath(folderModel.folder)
                 }
             }
-            Rectangle {
-                Layout.fillHeight: true
-                Layout.preferredWidth: (parent.width * 0.7) - parent.spacing
-                color: "white"
-                ColumnLayout {
-                    anchors.fill: parent
-                    // Layout.fillHeight: true
-                    // Layout.preferredWidth: parent.width * 0.8
+        }
 
+        Rectangle {
+            height: parent.height
+            width: parent.width * 0.7
+            color: "white"
+            ColumnLayout {
+                anchors.fill: parent
+                ScrollView {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.margins: 10
 
-                    ScrollView {
-                        // Layout.leftMargin: 6
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        // Layout.minimumWidth: 100
-                        //  Layout.preferredWidth: 300
-                        // Layout.minimumHeight: 50
-                        //  Layout.preferredHeight: 100
+                    TextEdit {
+                        id: te
+                        persistentSelection: true
+                        selectByMouse: true
+                        text: fm.text
 
-                        TextEdit {
-                            id: te
-                            //Layout.alignment: Qt.AlignCenter
-                            // Layout.preferredWidth: 500
-                            //Layout.preferredHeight: 300
-                            //implicitWidth: text.impl
+                        Menu {
+                            id: contextMenu
 
-                            //                            MouseArea {
-                            //                                anchors.fill: parent
-                            //                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                            //                                onClicked: {
-                            //                                     if (mouse.button === Qt.RightButton) {
-                            //                                        contextMenu.popup()
-                            //                                     }
-                            //                                }
-
-                            //                                Menu {
-                            //                                    id: contextMenu
-
-                            //                                    MenuItem { text: "копировать" }
-                            //                                    MenuItem { text: "вставить" }
-                            //                                }
-                            //                            }
+                            MenuItem {
+                                text: "копировать"
+                                onTriggered: fm.copyText(te.selectedText)
+                            }
+                            MenuItem {
+                                text: "вырезать"
+                                onTriggered: fm.removeText(te.selectionStart, te.selectionEnd)
+                            }
+                            MenuItem {
+                                text: "вставить"
+                                onTriggered: fm.pasteText(te.selectionStart)
+                            }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            propagateComposedEvents: true
+                            acceptedButtons: Qt.RightButton
+                            onClicked: {
+                                contextMenu.x = mouseX
+                                contextMenu.y = mouseY
+                                contextMenu.open()
+                            }
                         }
                     }
                 }
-
             }
         }
     }
 
     Popup {
         id: errorCopy
-        Label {
-            text: "такой файл уже существует или недостаточно прав для копирования"
-        }
-        x: 100
-        y: 100
-        width: 200
-        height: 300
+        x: parent.width/2 - width/2
+        y: parent.height/2 - height/2
+        width: 300
+        height: 100
         modal: true
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+
+        Column {
+            anchors.fill: parent
+            Label {
+                text: "такой файл уже существует или \nнедостаточно прав для копирования"
+            }
+            Button {
+                text: "ok"
+                anchors.horizontalCenter: parent.horizontalCenter
+                onClicked: errorCopy.close()
+                Rectangle {
+                    anchors.fill: parent
+                    color: "transparent"
+                    border.color: "black"
+                }
+            }
+        }
     }
 
     FileManager {
@@ -201,7 +222,6 @@ ApplicationWindow {
         if ((path.substr(path.length - 1) !== "/"))
             path += "/"
 
-        return decodeURIComponent(path);
+        return "/" + decodeURIComponent(path);
     }
-
 }
