@@ -1,0 +1,6 @@
+Package: fileReader
+Version: 1.0
+Maintainer: shugaev.andrei2010@yandex.ru
+Architecture: amd64
+Depends: qt5-default qml-module-qt-labs-folderlistmodel
+Description: fileReader
