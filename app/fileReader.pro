@@ -3,7 +3,7 @@ SOURCES += \
         filemanager.cpp \
         main.cpp
 
-RESOURCES += ui\qml.qrc
+RESOURCES += qml.qrc
 HEADERS += \
     filemanager.h \
     notification.h
